@@ -7,12 +7,12 @@ import java.util.List;
 
 public class AddressBook {
 
-    private List<Contact> contacts = new ArrayList<>();
+    private List<Contact>  contacts = new ArrayList<>();
 
     // UC-1: Add Contact
     public void addContact(Contact contact) {
         contacts.add(contact);
-        System.out.println("Contact added successfully!");
+         System.out.println("Contact added successfully!");
     }
 
     // UC-2: Display all contacts
