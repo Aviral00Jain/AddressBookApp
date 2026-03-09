@@ -2,7 +2,7 @@ package com.addressbookapp.model;
 
 import java.util.Objects;
 
-public class Contact {
+public class  Contact {
 
     private String name;
     private String phone;
