@@ -1,7 +1,7 @@
 package com.addressbookapp.service;
 
 import com.addressbookapp.model.Contact;
-import com.AddressBookApp.util.DBConnection;
+import com.addressbookapp.util.DBConnection;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.opencsv.CSVReader;
@@ -298,6 +298,68 @@ public class AddressBook {
             System.out.println("Error counting contacts by state: " + e.getMessage());
         }
         return stateCount;
+    }
+
+    public boolean addContactToDBWithTransaction(Contact c) {
+        try (Connection conn = DBConnection.getConnection()) {
+            conn.setAutoCommit(false);
+
+            String query1 = "INSERT INTO contacts (name, phone, email, city, state, date_added) VALUES (?, ?, ?, ?, ?, CURDATE())";
+            PreparedStatement stmt1 = conn.prepareStatement(query1);
+            stmt1.setString(1, c.getName());
+            stmt1.setString(2, c.getPhone());
+            stmt1.setString(3, c.getEmail());
+            stmt1.setString(4, c.getCity());
+            stmt1.setString(5, c.getState());
+            stmt1.executeUpdate();
+
+            String query2 = "INSERT INTO contact_history (contact_name, action, action_date) VALUES (?, ?, CURDATE())";
+            PreparedStatement stmt2 = conn.prepareStatement(query2);
+            stmt2.setString(1, c.getName());
+            stmt2.setString(2, "Added");
+            stmt2.executeUpdate();
+
+            conn.commit();
+            contacts.add(c);
+            System.out.println("Contact added successfully with transaction!");
+            return true;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            try {
+                System.out.println("Transaction failed, rolling back...");
+                DBConnection.getConnection().rollback();
+            } catch (SQLException ex) { ex.printStackTrace(); }
+            return false;
+        }
+    }
+
+    public long countByCityDB(String city) {
+        long count = 0;
+        try (Connection conn = DBConnection.getConnection()) {
+            String query = "SELECT count_contacts_by_city(?) AS total";
+            PreparedStatement stmt = conn.prepareStatement(query);
+            stmt.setString(1, city);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) count = rs.getLong("total");
+        } catch (SQLException e) {
+            System.out.println("Error counting contacts by city: " + e.getMessage());
+        }
+        return count;
+    }
+
+    public long countByStateDB(String state) {
+        long count = 0;
+        try (Connection conn = DBConnection.getConnection()) {
+            String query = "SELECT count_contacts_by_state(?) AS total";
+            PreparedStatement stmt = conn.prepareStatement(query);
+            stmt.setString(1, state);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) count = rs.getLong("total");
+        } catch (SQLException e) {
+            System.out.println("Error counting contacts by state: " + e.getMessage());
+        }
+        return count;
     }
 
 }
